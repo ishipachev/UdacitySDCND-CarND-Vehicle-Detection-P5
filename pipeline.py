@@ -107,6 +107,11 @@ def pipeline(img):
     # apparently this is the best way to flatten a list of lists
     rectangles = [item for sublist in rectangles for item in sublist]
 
+    #Plot rectangles on image
+    for bbox in rectangles:
+        cv2.rectangle(img, bbox[0],
+                      bbox[1], (0, 255, 0), 4)
+
     out_img, heatmap, labels = apply_heat(img, rectangles)
     return out_img, heatmap, labels
 
@@ -115,7 +120,7 @@ video_path = "project_video.mp4"
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output/output.avi', fourcc, 25.0, (1280, 720), isColor=True)
+out = cv2.VideoWriter('output/output2.avi', fourcc, 25.0, (1280, 720), isColor=True)
 
 cap = cv2.VideoCapture(video_path)
 cnt = 0
@@ -140,6 +145,8 @@ while cap.isOpened():
 #
 # for file in files:
 #     img = cv2.imread(file)
+#     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#     img = img.astype(np.float32) / 255
 #     result, heat, labels = pipeline(img)
 #
 #     fig = plt.figure()
@@ -150,4 +157,9 @@ while cap.isOpened():
 #     plt.imshow(heat, cmap='hot')
 #     plt.title('Heat Map')
 #     fig.tight_layout()
+#
+#     # plt.imshow(labels[0], cmap='gray')
+#     # plt.title('Labels')
+#     # fig.tight_layout()
+
 
