@@ -64,7 +64,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace):
     draw_img = np.copy(img)
-    # img = img.astype(np.float32) / 255
 
     img_tosearch = img[ystart:ystop, :, :]
     ctrans_tosearch = convert_color(img_tosearch, conv=colorspace)
@@ -110,8 +109,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # Extract the image patch
             subimg = cv2.resize(ctrans_tosearch[ytop:ytop + window, xleft:xleft + window], (64, 64))
 
-            # feature_image = subimg.astype(np.float32) / 255
-            feature_image = subimg
+            feature_image = subimg.astype(np.float32) / 255
+            # feature_image = subimg
 
             features_list = img_features(feature_image, hist_bins, orient,
                         pix_per_cell, cell_per_block, hog_channel, spatial_size)
@@ -126,18 +125,19 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft * scale)
                 ytop_draw = np.int(ytop * scale)
                 win_draw = np.int(window * scale)
-                cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
-                              (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
+                # cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
+                #               (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
                 box_list.append(((xbox_left, ytop_draw + ystart), (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
 
-    return draw_img, box_list
+    # return draw_img, box_list
+    return box_list
 
 
-ystart = 400
-ystop = 656
-scale = 4
-
-out_img, box_list = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace)
-
-plt.imshow(out_img)
-plt.show()
+# ystart = 400
+# ystop = 656
+# scale = 2
+#
+# out_img, box_list = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace)
+#
+# plt.imshow(out_img)
+# plt.show()
