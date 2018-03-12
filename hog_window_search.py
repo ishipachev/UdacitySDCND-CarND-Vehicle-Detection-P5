@@ -23,12 +23,14 @@ img = mpimg.imread('test_images/test1.jpg')
 
 
 def convert_color(img, conv='RGB2YCrCb'):
-    if conv == 'RGB2YCrCb':
+    if conv == 'RGB':
+        return img
+    if (conv == 'RGB2YCrCb') or (conv == 'YCrCb'):
         return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    if conv == 'BGR2YCrCb':
-        return cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-    if conv == 'RGB2LUV':
+    if conv == 'RGB2LUV' or conv == 'LUV':
         return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
+    if conv == 'YUV':
+        return cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
     if conv == 'HLS':
         return cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     else:
@@ -78,7 +80,7 @@ def color_hist(img, nbins=32):  # bins_range=(0, 256)
 # Define a single function that can extract features using hog sub-sampling and make predictions
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace):
     draw_img = np.copy(img)
-    img = img.astype(np.float32) / 255
+    # img = img.astype(np.float32) / 255
 
     img_tosearch = img[ystart:ystop, :, :]
     ctrans_tosearch = convert_color(img_tosearch, conv=colorspace)
@@ -107,6 +109,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
     hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
 
+    box_list = []
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb * cells_per_step
@@ -128,11 +131,11 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # hist_features = color_hist(subimg, nbins=hist_bins)
 
             # Scale features and make a prediction
-            # test_features = X_scaler.transform(
-            #     np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))
-            test_features = hog_features
+            # print(hog_features.shape)
+            test_features = X_scaler.transform(hog_features.reshape(1, -1))
+            # test_features = hog_features
             # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
-            test_prediction = svc.predict([test_features])
+            test_prediction = svc.predict(test_features)
 
             if test_prediction == 1:
                 xbox_left = np.int(xleft * scale)
@@ -140,15 +143,18 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 win_draw = np.int(window * scale)
                 cv2.rectangle(draw_img, (xbox_left, ytop_draw + ystart),
                               (xbox_left + win_draw, ytop_draw + win_draw + ystart), (0, 0, 255), 6)
+                box_list.append(((xbox_left, ytop_draw + ystart), (xbox_left + win_draw, ytop_draw + win_draw + ystart)))
 
-    return draw_img
+    return draw_img, box_list
 
 
 ystart = 400
 ystop = 656
-scale = 1.5
+scale = 4
 
-out_img = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace)
+out_img, box_list = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, colorspace)
 
 plt.imshow(out_img)
 plt.show()
+
+print(len(box_list))

@@ -30,6 +30,7 @@ def read_image_folders():
 
     return cars, notcars
 
+
 # Define a function to return HOG features and visualization
 def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                      vis=False, feature_vec=True):
@@ -58,7 +59,8 @@ def extract_features(imgs, cspace='RGB', orient=9,
     # Iterate through the list of images
     for file in imgs:
         # Read in each one by one
-        image = mpimg.imread(file)
+        image = cv2.imread(file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # apply color conversion if other than 'RGB'
         if cspace != 'RGB':
             if cspace == 'HSV':
@@ -74,6 +76,8 @@ def extract_features(imgs, cspace='RGB', orient=9,
         else:
             feature_image = np.copy(image)
 
+        # feature_image = feature_image.astype(np.float32) / 255
+
         # Call get_hog_features() with vis=False, feature_vec=True
         if hog_channel == 'ALL':
             hog_features = []
@@ -87,6 +91,41 @@ def extract_features(imgs, cspace='RGB', orient=9,
                                             pix_per_cell, cell_per_block, vis=False, feature_vec=True)
         # Append the new feature vector to the features list
         features.append(hog_features)
+    # Return list of feature vectors
+    return features
+
+# Define a function to extract features from a list of images
+# Have this function call bin_spatial() and color_hist()
+def extract_features2(imgs, cspace='RGB', orient=9,
+                     pix_per_cell=8, cell_per_block=2, hog_channel=0):
+    # Create a list to append feature vectors to
+    features = []
+    # Iterate through the list of images
+    for file in imgs:
+        # Read in each one by one
+        image = cv2.imread(file)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # apply color conversion if other than 'RGB'
+        if cspace != 'RGB':
+            if cspace == 'HSV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+            elif cspace == 'LUV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2LUV)
+            elif cspace == 'HLS':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+            elif cspace == 'YUV':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YUV)
+            elif cspace == 'YCrCb':
+                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2YCrCb)
+        else:
+            feature_image = np.copy(image)
+
+        # feature_image = feature_image.astype(np.float32) / 255
+
+        spatial_features = bin_spatial(feature_image, (32, 32))
+
+        # Append the new feature vector to the features list
+        features.append(spatial_features)
     # Return list of feature vectors
     return features
 
@@ -108,16 +147,17 @@ print(len(cars), len(notcars))
 
 # Reduce the sample size because HOG features are slow to compute
 # The quiz evaluator times out after 13s of CPU time
-# sample_size = 500
+# sample_size = 8000
 # cars = cars[0:sample_size]
 # notcars = notcars[0:sample_size]
 
 ### TODO: Tweak these parameters and see how the results change.
-colorspace = 'HLS'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+colorspace = 'YCrCb'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 9
-pix_per_cell = 8
+pix_per_cell = 16
 cell_per_block = 2
 hog_channel = "ALL"  # Can be 0, 1, 2, or "ALL"
+# hog_channel = 2
 
 t = time.time()
 car_features = extract_features(cars, cspace=colorspace, orient=orient,
@@ -172,7 +212,8 @@ svc_dict = {"svc": svc,
             "orient": orient,
             "pix_per_cell": pix_per_cell,
             "cell_per_block": cell_per_block,
-            "colorspace": colorspace
+            "colorspace": colorspace,
+            "hog_channel": hog_channel
             }
 
 model_path = 'output/svc_model.p'
