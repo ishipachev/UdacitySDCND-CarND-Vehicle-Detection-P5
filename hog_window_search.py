@@ -5,6 +5,7 @@ import pickle
 import cv2
 from skimage.feature import hog
 from features import img_features
+from features import convert_color
 
 
 # load a pe-trained svc model from a serialized (pickle) file
@@ -22,43 +23,6 @@ spatial_size = dist_pickle["spatial_size"]  # Spatial binning dimensions
 hist_bins = dist_pickle["hist_bins"]     # Number of histogram bins
 
 img = mpimg.imread('test_images/test1.jpg')
-
-
-def convert_color(img, conv='RGB2YCrCb'):
-    if conv == 'RGB':
-        return img
-    if (conv == 'RGB2YCrCb') or (conv == 'YCrCb'):
-        return cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    if conv == 'RGB2LUV' or conv == 'LUV':
-        return cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-    if conv == 'YUV':
-        return cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-    if conv == 'HLS':
-        return cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-    else:
-        return None
-
-
-def get_hog_features(img, orient, pix_per_cell, cell_per_block,
-                     vis=False, feature_vec=True):
-    # Call with two outputs if vis==True
-    if vis == True:
-        features, hog_image = hog(img, orientations=orient,
-                                  pixels_per_cell=(pix_per_cell, pix_per_cell),
-                                  cells_per_block=(cell_per_block, cell_per_block),
-                                  block_norm='L2-Hys',
-                                  transform_sqrt=False,
-                                  visualise=vis, feature_vector=feature_vec)
-        return features, hog_image
-    # Otherwise call with one output
-    else:
-        features = hog(img, orientations=orient,
-                       pixels_per_cell=(pix_per_cell, pix_per_cell),
-                       cells_per_block=(cell_per_block, cell_per_block),
-                       block_norm='L2-Hys',
-                       transform_sqrt=False,
-                       visualise=vis, feature_vector=feature_vec)
-        return features
 
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
@@ -88,9 +52,9 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     nysteps = (nyblocks - nblocks_per_window) // cells_per_step + 1
 
     # Compute individual channel HOG features for the entire image
-    hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
-    hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
-    hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    # hog1 = get_hog_features(ch1, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    # hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
+    # hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
 
     box_list = []
     for xb in range(nxsteps):
@@ -98,10 +62,10 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             ypos = yb * cells_per_step
             xpos = xb * cells_per_step
             # Extract HOG for this patch
-            hog_feat1 = hog1[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-            hog_feat2 = hog2[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-            hog_feat3 = hog3[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
-            hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
+            # hog_feat1 = hog1[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
+            # hog_feat2 = hog2[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
+            # hog_feat3 = hog3[ypos:ypos + nblocks_per_window, xpos:xpos + nblocks_per_window].ravel()
+            # hog_features = np.hstack((hog_feat1, hog_feat2, hog_feat3))
 
             xleft = xpos * pix_per_cell
             ytop = ypos * pix_per_cell
@@ -109,10 +73,10 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # Extract the image patch
             subimg = cv2.resize(ctrans_tosearch[ytop:ytop + window, xleft:xleft + window], (64, 64))
 
-            feature_image = subimg.astype(np.float32) / 255
+            # feature_image = subimg.astype(np.float32) / 255
             # feature_image = subimg
 
-            features_list = img_features(feature_image, hist_bins, orient,
+            features_list = img_features(subimg, hist_bins, orient,
                         pix_per_cell, cell_per_block, hog_channel, spatial_size)
 
             features = np.hstack((features_list[0], features_list[1], features_list[2]))

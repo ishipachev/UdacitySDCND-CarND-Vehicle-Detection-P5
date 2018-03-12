@@ -123,8 +123,13 @@ while cap.isOpened():
 # for i in range(50):
     ret, frame = cap.read()
     if ret is True:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = frame.astype(np.float32) / 255
         result, heat, labels = pipeline(frame)
-        out.write(result)
+
+        # result = cv2.cvtColor(frame, cv2.COLOR_LUV2RGB)
+        result2 = cv2.cvtColor((result * 255).astype(np.uint8), cv2.COLOR_BGR2RGB)
+        out.write(result2)
         cnt += 1
         print(cnt)
     else:

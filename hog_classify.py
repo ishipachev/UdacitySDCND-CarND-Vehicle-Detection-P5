@@ -9,20 +9,9 @@ from sklearn.preprocessing import StandardScaler
 from skimage.feature import hog
 import pickle
 from sklearn.model_selection import train_test_split
-from features import extract_features
-
-# Define a function to compute binned color features
-def bin_spatial(img, size=(16, 16)):
-    return cv2.resize(img, size).ravel()
-
-# Define a function to compute color histogram features
-def color_hist(img, nbins=32):
-    ch1 = np.histogram(img[:,:,0], bins=nbins, range=(0, 256))[0]#We need only the histogram, no bins edges
-    ch2 = np.histogram(img[:,:,1], bins=nbins, range=(0, 256))[0]
-    ch3 = np.histogram(img[:,:,2], bins=nbins, range=(0, 256))[0]
-    hist = np.hstack((ch1, ch2, ch3))
-    return hist
-
+from features import convert_color
+from features import img_features
+from sklearn.utils import shuffle
 
 def read_image_folders():
     cars = []
@@ -41,64 +30,53 @@ def read_image_folders():
     return cars, notcars
 
 
-# Define a function to return HOG features and visualization
-def get_hog_features(img, orient, pix_per_cell, cell_per_block,
-                     vis=False, feature_vec=True):
-    # Call with two outputs if vis==True
-    if vis == True:
-        features, hog_image = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
-                                  cells_per_block=(cell_per_block, cell_per_block), block_norm='L2-Hys',
-                                  transform_sqrt=True,
-                                  visualise=vis, feature_vector=feature_vec)
-        return features, hog_image
-    # Otherwise call with one output
-    else:
-        features = hog(img, orientations=orient, pixels_per_cell=(pix_per_cell, pix_per_cell),
-                       cells_per_block=(cell_per_block, cell_per_block), block_norm='L2-Hys',
-                       transform_sqrt=True,
-                       visualise=vis, feature_vector=feature_vec)
-        return features
-
-
-
-# Divide up into cars and notcars
-# images = glob.glob('*.jpeg')
-# cars = []
-# notcars = []
-# for image in images:
-#     if 'image' in image or 'extra' in image:
-#         notcars.append(image)
-#     else:
-#         cars.append(image)
+def extract_features(imgs, colorspace='RGB', spatial_size=(32, 32),
+                        hist_bins=32, orient=9,
+                        pix_per_cell=8, cell_per_block=2, hog_channel=0):
+    # Create a list to append feature vectors to
+    features = []
+    # Iterate through the list of images
+    for file in imgs:
+        file_features = []
+        image = mpimg.imread(file)  # Read in each imageone by one
+        # apply color conversion if other than 'RGB'
+        feature_image = convert_color(image, colorspace)
+        file_features = img_features(feature_image, hist_bins, orient,
+                        pix_per_cell, cell_per_block, hog_channel, spatial_size)
+        features.append(np.concatenate(file_features))
+    return features
 
 
 cars, notcars = read_image_folders()
 
 print(len(cars), len(notcars))
 
+cars = shuffle(cars)
+notcars = shuffle(notcars)
+
 # Reduce the sample size because HOG features are slow to compute
 # The quiz evaluator times out after 13s of CPU time
-# sample_size = 1000
-# cars = cars[0:sample_size]
-# notcars = notcars[0:sample_size]
+sample_size = 2000
+cars = cars[0:sample_size]
+notcars = notcars[0:sample_size]
 
 ### TODO: Tweak these parameters and see how the results change.
 colorspace = 'LUV'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 9   # HOG orientations
 pix_per_cell = 16  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
-hog_channel = 0  # Can be 0, 1, 2, or "ALL"
+hog_channel = 2  # Can be 0, 1, 2, or "ALL"
 spatial_size = (16, 16)  # Spatial binning dimensions
 hist_bins = 8     # Number of histogram bins
 
 
 t = time.time()
-car_features = extract_features(cars, color_space=colorspace,
+car_features = extract_features(cars, colorspace=colorspace,
                                 spatial_size=spatial_size, hist_bins=hist_bins,
                                 orient=orient, pix_per_cell=pix_per_cell,
                                 cell_per_block=cell_per_block,
                                 hog_channel=hog_channel)
-notcar_features = extract_features(notcars, color_space=colorspace,
+notcar_features = extract_features(notcars, colorspace=colorspace,
                                 spatial_size=spatial_size, hist_bins=hist_bins,
                                 orient=orient, pix_per_cell=pix_per_cell,
                                 cell_per_block=cell_per_block,
