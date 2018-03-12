@@ -13,7 +13,6 @@ from scipy.ndimage.measurements import label
 # image = mpimg.imread('test_image.jpg')
 # heat = np.zeros_like(image[:, :, 0]).astype(np.float)
 
-
 def add_heat(heatmap, bbox_list):
     # Iterate through list of bboxes
     for box in bbox_list:
@@ -50,7 +49,7 @@ def draw_labeled_bboxes(img, labels):
 
 def keep_heat(bboxes):
 
-    if (len(keep_heat.box) < 1):
+    if (len(keep_heat.box) < 6):
         keep_heat.box.append(bboxes)
     else:
         keep_heat.box.pop(0)
@@ -65,17 +64,18 @@ def keep_heat(bboxes):
 def apply_heat(image, box_list):
     heat = np.zeros_like(image[:, :, 0]).astype(np.float)
 
-    keep_heat.box = []
     full_list = keep_heat(box_list)
 
     heat = add_heat(heat, full_list)
-    heat = apply_threshold(heat, 0)
+    heat = apply_threshold(heat, 9)
     heatmap = np.clip(heat, 0, 255)
     labels = label(heatmap)
     draw_img = draw_labeled_bboxes(np.copy(image), labels)
 
     return draw_img, heat, labels
 
+
+keep_heat.box = []
 
 # Add heat to each box in box list
 # heat = add_heat(heat, box_list)

@@ -56,9 +56,9 @@ notcars = shuffle(notcars)
 
 # Reduce the sample size because HOG features are slow to compute
 # The quiz evaluator times out after 13s of CPU time
-sample_size = 2000
-cars = cars[0:sample_size]
-notcars = notcars[0:sample_size]
+sample_size = 2500
+# cars = cars[0:sample_size]
+# notcars = notcars[0:sample_size]
 
 ### TODO: Tweak these parameters and see how the results change.
 colorspace = 'LUV'  # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -66,8 +66,8 @@ orient = 9   # HOG orientations
 pix_per_cell = 16  # HOG pixels per cell
 cell_per_block = 2  # HOG cells per block
 hog_channel = 2  # Can be 0, 1, 2, or "ALL"
-spatial_size = (16, 16)  # Spatial binning dimensions
-hist_bins = 8     # Number of histogram bins
+spatial_size = (32, 32)  # Spatial binning dimensions
+hist_bins = 32     # Number of histogram bins
 
 
 t = time.time()
