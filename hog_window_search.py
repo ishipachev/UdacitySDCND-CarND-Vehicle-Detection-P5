@@ -4,6 +4,7 @@ import numpy as np
 import pickle
 import cv2
 from skimage.feature import hog
+from features import img_features
 
 
 # load a pe-trained svc model from a serialized (pickle) file
@@ -16,8 +17,9 @@ orient = dist_pickle["orient"]
 pix_per_cell = dist_pickle["pix_per_cell"]
 cell_per_block = dist_pickle["cell_per_block"]
 colorspace = dist_pickle["colorspace"]
-# spatial_size = dist_pickle["spatial_size"]
-# hist_bins = dist_pickle["hist_bins"]
+hog_channel = dist_pickle["hog_channel"]  # Can be 0, 1, 2, or "ALL"
+spatial_size = dist_pickle["spatial_size"]  # Spatial binning dimensions
+hist_bins = dist_pickle["hist_bins"]     # Number of histogram bins
 
 img = mpimg.imread('test_images/test1.jpg')
 
@@ -57,24 +59,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                        transform_sqrt=False,
                        visualise=vis, feature_vector=feature_vec)
         return features
-
-
-def bin_spatial(img, size=(32, 32)):
-    color1 = cv2.resize(img[:, :, 0], size).ravel()
-    color2 = cv2.resize(img[:, :, 1], size).ravel()
-    color3 = cv2.resize(img[:, :, 2], size).ravel()
-    return np.hstack((color1, color2, color3))
-
-
-def color_hist(img, nbins=32):  # bins_range=(0, 256)
-    # Compute the histogram of the color channels separately
-    channel1_hist = np.histogram(img[:, :, 0], bins=nbins)
-    channel2_hist = np.histogram(img[:, :, 1], bins=nbins)
-    channel3_hist = np.histogram(img[:, :, 2], bins=nbins)
-    # Concatenate the histograms into a single feature vector
-    hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
-    # Return the individual histograms, bin_centers and feature vector
-    return hist_features
 
 
 # Define a single function that can extract features using hog sub-sampling and make predictions
@@ -126,13 +110,14 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # Extract the image patch
             subimg = cv2.resize(ctrans_tosearch[ytop:ytop + window, xleft:xleft + window], (64, 64))
 
-            # Get color features
-            # spatial_features = bin_spatial(subimg, size=spatial_size)
-            # hist_features = color_hist(subimg, nbins=hist_bins)
+            # feature_image = subimg.astype(np.float32) / 255
+            feature_image = subimg
 
-            # Scale features and make a prediction
-            # print(hog_features.shape)
-            test_features = X_scaler.transform(hog_features.reshape(1, -1))
+            features_list = img_features(feature_image, hist_bins, orient,
+                        pix_per_cell, cell_per_block, hog_channel, spatial_size)
+
+            features = np.hstack((features_list[0], features_list[1], features_list[2]))
+            test_features = X_scaler.transform(features.reshape(1, -1))
             # test_features = hog_features
             # test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))
             test_prediction = svc.predict(test_features)
@@ -156,5 +141,3 @@ out_img, box_list = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, 
 
 plt.imshow(out_img)
 plt.show()
-
-print(len(box_list))

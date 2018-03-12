@@ -31,6 +31,7 @@ def pipeline(img):
     for bbox in box_list:
         cv2.rectangle(out_img, bbox[0],
                       bbox[1], (0, 0, 255), 6)
+    
     return out_img
 
 
@@ -43,7 +44,7 @@ out = cv2.VideoWriter('output/output.avi', fourcc, 25.0, (1280, 720), isColor=Tr
 cap = cv2.VideoCapture(video_path)
 cnt = 0
 while cap.isOpened():
-# for i in range(25):
+# for i in range(50):
     ret, frame = cap.read()
     if ret is True:
         result = pipeline(frame)
