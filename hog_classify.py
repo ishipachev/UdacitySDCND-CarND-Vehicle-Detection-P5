@@ -14,6 +14,7 @@ from features import img_features
 from sklearn.utils import shuffle
 
 #just some stupid test
+#and another one
 
 
 def read_image_folders():
