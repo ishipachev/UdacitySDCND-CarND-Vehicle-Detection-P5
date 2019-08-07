@@ -15,7 +15,7 @@ from sklearn.utils import shuffle
 
 #just some stupid test
 #and another one
-
+#and another one
 
 def read_image_folders():
     cars = []
