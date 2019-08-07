@@ -13,6 +13,9 @@ from features import convert_color
 from features import img_features
 from sklearn.utils import shuffle
 
+#just some stupid test
+
+
 def read_image_folders():
     cars = []
     cars.append(glob.glob('vehicles\GTI_Far\*.png'))
